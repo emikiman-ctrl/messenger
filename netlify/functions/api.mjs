@@ -12,7 +12,10 @@ const json = (data, status = 200) =>
   });
 
 const store = () => getStore({ name: "chat", consistency: "strong" });
-const roomPrefix = (room) => `m/${encodeURIComponent(room)}/`;
+// Room names are stored as hex so keys contain only [0-9a-f] (Cyrillic and spaces broke prefix listing).
+const hex = (str) => Buffer.from(str, "utf8").toString("hex");
+const unhex = (h) => Buffer.from(h, "hex").toString("utf8");
+const roomPrefix = (room) => `m2/${hex(room)}/`;
 
 function cleanRoom(value) {
   const room = String(value || "").trim();
@@ -20,9 +23,9 @@ function cleanRoom(value) {
 }
 
 async function listRooms() {
-  const { blobs } = await store().list({ prefix: "r/" });
+  const { blobs } = await store().list({ prefix: "r2/" });
   return blobs
-    .map((b) => decodeURIComponent(b.key.slice(2)))
+    .map((b) => unhex(b.key.slice(3)))
     .sort((a, b) => a.localeCompare(b, "ru"));
 }
 
@@ -53,7 +56,7 @@ async function postMessage(body) {
   const msg = { id, room, name, text, ts };
   const s = store();
   await s.setJSON(roomPrefix(room) + id, msg);
-  await s.set(`r/${encodeURIComponent(room)}`, "1");
+  await s.set(`r2/${hex(room)}`, "1");
   return json(msg, 201);
 }
 

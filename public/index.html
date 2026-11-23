@@ -202,6 +202,19 @@
   #recCancel { margin-left: auto; color: var(--red); font-size: 15px; }
   @keyframes blink { 50% { opacity: .2; } }
 
+  /* action sheet (iOS style) */
+  #sheet { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.25); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 8px; padding-bottom: max(8px, env(safe-area-inset-bottom)); animation: fade .15s; }
+  #sheet .group { width: 100%; max-width: 420px; background: var(--bar); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-radius: 14px; overflow: hidden; margin-top: 8px; animation: up .2s ease-out; }
+  #sheet .group > * { display: block; width: 100%; padding: 16px; text-align: center; font-size: 19px; border-top: 0.5px solid var(--sep); }
+  #sheet .group > *:first-child { border-top: 0; }
+  #sheet .preview { font-size: 13px; color: var(--muted); padding: 12px 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #sheet .danger { color: var(--red); }
+  #sheet .cancel { color: var(--blue); font-weight: 600; background: var(--bg); }
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes up { from { transform: translateY(40px); opacity: 0; } }
+  .msg.picked { transform: scale(1.03); transition: transform .15s; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+  .msg.mine { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
   #viewer {
     position: fixed; inset: 0; z-index: 10; background: rgba(0,0,0,.92);
     display: grid; place-items: center; cursor: zoom-out;
@@ -292,6 +305,10 @@
 </section>
 
 <div id="viewer" hidden><img alt=""></div>
+<div id="sheet" hidden>
+  <div class="group"><div class="preview" id="sheetPreview"></div><button type="button" class="danger" id="sheetDelete">Удалить у всех</button></div>
+  <div class="group"><button type="button" class="cancel" id="sheetCancel">Отмена</button></div>
+</div>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -634,7 +651,9 @@ function messageEl(m, prev) {
   }
   const div = document.createElement("div");
   div.className = "msg" + (mine ? " mine" : "");
+  div.dataset.id = m.id;
   div.title = new Date(m.ts).toLocaleString("ru-RU");
+  if (mine) attachDeleteHandlers(div, m);
   div.style.marginTop = sameAuthor ? "2px" : (mine || conv.kind === "dm" ? "8px" : "0");
   const src = m.media ? "/api/media/" + m.media.id : "";
 
@@ -707,6 +726,66 @@ function addMessages(list, fromPoll) {
   render(!inOrder);
 }
 
+/* ---------- deleting ---------- */
+function removeDeleted(ids) {
+  if (!ids.length) return;
+  const gone = new Set(ids);
+  const before = cache.length;
+  cache = cache.filter((m) => !gone.has(m.id));
+  if (cache.length !== before) render(true);
+}
+
+function attachDeleteHandlers(div, m) {
+  div.addEventListener("contextmenu", (e) => { e.preventDefault(); openSheet(div, m); });
+  let timer = null;
+  let startX = 0, startY = 0;
+  div.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY;
+    timer = setTimeout(() => { timer = null; openSheet(div, m); }, 450);
+  }, { passive: true });
+  const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  div.addEventListener("touchend", cancel);
+  div.addEventListener("touchcancel", cancel);
+  div.addEventListener("touchmove", (e) => {
+    const t = e.touches[0];
+    if (Math.abs(t.clientX - startX) > 8 || Math.abs(t.clientY - startY) > 8) cancel();
+  }, { passive: true });
+}
+
+let sheetTarget = null;
+function openSheet(div, m) {
+  if (navigator.vibrate) navigator.vibrate(10);
+  sheetTarget = { div, m };
+  div.classList.add("picked");
+  const label = { image: "📷 Фото", video: "🎬 Видео", audio: "🎤 Голосовое" }[m.type] || m.text;
+  $("sheetPreview").textContent = label;
+  $("sheet").hidden = false;
+}
+function closeSheet() {
+  if (sheetTarget) sheetTarget.div.classList.remove("picked");
+  sheetTarget = null;
+  $("sheet").hidden = true;
+}
+$("sheetCancel").addEventListener("click", closeSheet);
+$("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("sheet").hidden) closeSheet(); });
+
+$("sheetDelete").addEventListener("click", async () => {
+  if (!sheetTarget) return;
+  const { m } = sheetTarget;
+  closeSheet();
+  // Hide right away; bring it back if the server refuses.
+  removeDeleted([m.id]);
+  try {
+    await api("messages/delete", { method: "POST", json: { ...convBody(), id: m.id } });
+    if (conv.kind === "dm") loadConvs();
+  } catch (err) {
+    addMessages([m], false);
+    alert("Не удалось удалить: " + err.message);
+  }
+});
+
 /* ---------- polling ---------- */
 async function poll(first) {
   clearTimeout(pollTimer);
@@ -718,6 +797,7 @@ async function poll(first) {
     const data = await api("messages?" + convQuery() + (lastId ? "&since=" + lastId : ""));
     if (forConv === JSON.stringify(conv)) {
       addMessages(data.messages, true);
+      removeDeleted(data.deleted || []);
       if (!busy) setStatus("");
     }
   } catch (err) {

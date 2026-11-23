@@ -17,7 +17,8 @@ const MEDIA_TYPES = /^(image\/(jpeg|png|gif|webp)|video\/(mp4|webm|quicktime)|au
    u3/<hex lowerName>        user { name, salt, hash }
    s3/<token>                session { name }
    d3/<hex lower>/<hex lower> DM index entry { with }
-   f3/<id>                   media bytes (metadata: mime)                                  */
+   f3/<id>                   media bytes (metadata: mime)
+   x2/<hex conv>/<id>        tombstone of a deleted message, so other clients drop it        */
 
 const hex = (str) => Buffer.from(str, "utf8").toString("hex");
 const unhex = (h) => Buffer.from(h, "hex").toString("utf8");
@@ -121,11 +122,49 @@ async function users(me, q) {
 async function getMessages(conv, since) {
   const s = store();
   const prefix = convPrefix(conv);
-  const { blobs } = await s.list({ prefix });
+  const tombPrefix = `x2/${hex(conv)}/`;
+  const [{ blobs }, { blobs: tombs }] = await Promise.all([s.list({ prefix }), s.list({ prefix: tombPrefix })]);
   let keys = blobs.map((b) => b.key).sort();
   keys = since ? keys.filter((k) => k > prefix + since) : keys.slice(-INITIAL_LIMIT);
   const msgs = await Promise.all(keys.map((k) => s.get(k, { type: "json" })));
-  return msgs.filter(Boolean).map((m) => ({ type: "text", ...m }));
+  return {
+    messages: msgs.filter(Boolean).map((m) => ({ type: "text", ...m })),
+    deleted: tombs.map((b) => b.key.slice(tombPrefix.length)),
+  };
+}
+
+const PREVIEW = { image: "📷 Фото", video: "🎬 Видео", audio: "🎤 Голосовое" };
+const previewOf = (m) => (m ? (m.type === "text" || !m.type ? m.text.slice(0, 80) : PREVIEW[m.type]) : "Нет сообщений");
+
+async function setDmPreviews(me, other, last, ts) {
+  const s = store();
+  const p = previewOf(last);
+  await Promise.all([
+    s.setJSON(`d3/${hex(me.toLowerCase())}/${hex(other.toLowerCase())}`, { with: other, last: last && last.name !== me ? `${last.name}: ${p}` : p, ts }),
+    s.setJSON(`d3/${hex(other.toLowerCase())}/${hex(me.toLowerCase())}`, { with: me, last: last && last.name !== other ? `${last.name}: ${p}` : p, ts }),
+  ]);
+}
+
+async function deleteMessage(me, body) {
+  const target = await resolveConv(me, body);
+  if (target.error) return fail(target.error);
+  const id = String(body.id || "");
+  if (!/^[0-9]{13}-[0-9a-z]{4,12}$/.test(id)) return fail("Некорректное сообщение");
+  const s = store();
+  const key = convPrefix(target.conv) + id;
+  const msg = await s.get(key, { type: "json" });
+  if (!msg) return json({ ok: true }); // already gone
+  if (msg.name !== me) return fail("Удалять можно только свои сообщения", 403);
+  await s.set(`x2/${hex(target.conv)}/${id}`, "1");
+  await s.delete(key);
+  if (msg.media && msg.media.id) await s.delete(`f3/${msg.media.id}`);
+  if (target.dmWith) {
+    const { blobs } = await s.list({ prefix: convPrefix(target.conv) });
+    const lastKey = blobs.map((b) => b.key).sort().pop();
+    const last = lastKey ? await s.get(lastKey, { type: "json" }) : null;
+    await setDmPreviews(me, target.dmWith, last, last ? last.ts : Date.now());
+  }
+  return json({ ok: true });
 }
 
 async function postMessage(me, body) {
@@ -158,11 +197,7 @@ async function postMessage(me, body) {
   if (target.room) {
     await s.set(`r2/${hex(target.room)}`, "1");
   } else {
-    const preview = type === "text" ? text.slice(0, 80) : { image: "📷 Фото", video: "🎬 Видео", audio: "🎤 Голосовое" }[type];
-    await Promise.all([
-      s.setJSON(`d3/${hex(me.toLowerCase())}/${hex(target.dmWith.toLowerCase())}`, { with: target.dmWith, last: preview, ts: msg.ts }),
-      s.setJSON(`d3/${hex(target.dmWith.toLowerCase())}/${hex(me.toLowerCase())}`, { with: me, last: `${me}: ${preview}`, ts: msg.ts }),
-    ]);
+    await setDmPreviews(me, target.dmWith, msg, msg.ts);
   }
   return json(msg, 201);
 }
@@ -233,12 +268,17 @@ export default async (req) => {
       });
       if (target.error) return fail(target.error);
       const since = (url.searchParams.get("since") || "").replace(/[^0-9a-z-]/g, "");
-      return json({ messages: await getMessages(target.conv, since) });
+      return json(await getMessages(target.conv, since));
     }
     if (route === "messages" && req.method === "POST") {
       const body = await req.json().catch(() => null);
       if (!body) return fail("Плохой запрос");
       return await postMessage(me, body);
+    }
+    if (route === "messages/delete" && req.method === "POST") {
+      const body = await req.json().catch(() => null);
+      if (!body) return fail("Плохой запрос");
+      return await deleteMessage(me, body);
     }
     return fail("Не найдено", 404);
   } catch (err) {

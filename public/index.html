@@ -3,129 +3,221 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1f6feb">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Мессенджер</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Сообщения</title>
 <style>
   :root {
-    --bg: #f4f5f7; --panel: #ffffff; --text: #1b1f24; --muted: #6b7280;
-    --line: #e3e5e8; --accent: #1f6feb; --mine: #d9e8ff; --theirs: #ffffff;
+    --bg: #ffffff;
+    --side: #f5f5f7;
+    --text: #1d1d1f;
+    --muted: #86868b;
+    --sep: rgba(60, 60, 67, 0.12);
+    --blue: #007aff;
+    --bubble: #e9e9eb;
+    --field: rgba(118, 118, 128, 0.12);
+    --bar: rgba(255, 255, 255, 0.72);
+    --radius: 18px;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #0f1115; --panel: #171a21; --text: #e6e8eb; --muted: #8b93a1;
-      --line: #262b35; --accent: #4c8dff; --mine: #1d3357; --theirs: #1f232c;
+      --bg: #000000;
+      --side: #1c1c1e;
+      --text: #f5f5f7;
+      --muted: #8e8e93;
+      --sep: rgba(84, 84, 88, 0.45);
+      --blue: #0a84ff;
+      --bubble: #26252a;
+      --field: rgba(118, 118, 128, 0.24);
+      --bar: rgba(22, 22, 24, 0.72);
     }
   }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; margin: 0; }
   body {
-    font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg); color: var(--text);
+    font: 17px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+    letter-spacing: -0.01em;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
   }
-  button, input { font: inherit; color: inherit; }
-  button {
-    border: 0; border-radius: 10px; background: var(--accent); color: #fff;
-    padding: 10px 16px; cursor: pointer;
-  }
-  button.ghost { background: transparent; color: var(--accent); padding: 8px 10px; }
-  input {
-    width: 100%; padding: 10px 12px; border-radius: 10px;
-    border: 1px solid var(--line); background: var(--panel); outline: none;
-  }
-  input:focus { border-color: var(--accent); }
+  button, input { font: inherit; color: inherit; letter-spacing: inherit; }
+  button { background: none; border: 0; padding: 0; cursor: pointer; }
+  input { border: 0; outline: none; background: var(--field); border-radius: 10px; padding: 9px 14px; width: 100%; }
+  input::placeholder { color: var(--muted); }
 
-  /* Login */
+  /* ---------- Welcome ---------- */
   #login {
-    height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px;
+    min-height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 24px; text-align: center;
   }
-  .card {
-    background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
-    padding: 28px; width: 100%; max-width: 360px; display: grid; gap: 14px;
+  .logo {
+    width: 76px; height: 76px; border-radius: 18px;
+    background: linear-gradient(180deg, #5ac8fa, #007aff);
+    display: grid; place-items: center; margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(0, 122, 255, 0.25);
   }
-  .card h1 { margin: 0; font-size: 22px; }
-  .card p { margin: 0; color: var(--muted); }
+  .logo svg { width: 40px; height: 40px; }
+  #login h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; }
+  #login p { color: var(--muted); margin: 0 0 32px; }
+  #loginForm { width: 100%; max-width: 320px; display: grid; gap: 12px; }
+  #loginForm input { padding: 14px 16px; border-radius: 12px; text-align: center; }
+  .primary {
+    background: var(--blue); color: #fff; font-weight: 600;
+    border-radius: 12px; padding: 14px 16px;
+    transition: opacity .15s;
+  }
+  .primary:active { opacity: .7; }
 
-  /* App */
-  #app { height: 100%; display: none; grid-template-columns: 240px 1fr; }
+  /* ---------- Layout ---------- */
+  #app { height: 100%; display: none; grid-template-columns: 320px 1fr; }
   #app.on { display: grid; }
+
   aside {
-    background: var(--panel); border-right: 1px solid var(--line);
+    background: var(--side); border-right: 0.5px solid var(--sep);
     display: flex; flex-direction: column; min-height: 0;
   }
-  .me { padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .me b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #rooms { list-style: none; margin: 0; padding: 8px; overflow-y: auto; flex: 1; }
+  .side-head { padding: 18px 16px 10px; padding-top: max(18px, env(safe-area-inset-top)); }
+  .side-top { display: flex; justify-content: space-between; align-items: center; min-height: 32px; }
+  .link { color: var(--blue); font-size: 17px; }
+  .link:active { opacity: .5; }
+  .side-head h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; margin: 4px 0 10px; }
+  #roomForm { display: none; gap: 8px; }
+  #roomForm.on { display: flex; }
+
+  #rooms { list-style: none; margin: 0; padding: 0 8px 8px; overflow-y: auto; flex: 1; }
   #rooms li {
-    padding: 10px 12px; border-radius: 10px; cursor: pointer;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 10px; border-radius: 12px; cursor: pointer;
   }
-  #rooms li:hover { background: var(--bg); }
-  #rooms li.active { background: var(--accent); color: #fff; }
-  #newRoom { padding: 10px; border-top: 1px solid var(--line); display: flex; gap: 6px; }
-  #newRoom button { padding: 10px 14px; }
+  #rooms li:active { opacity: .6; }
+  #rooms li.active { background: var(--blue); color: #fff; }
+  #rooms li.active .sub { color: rgba(255, 255, 255, .75); }
+  .avatar {
+    flex: none; width: 44px; height: 44px; border-radius: 50%;
+    display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 18px;
+    background: linear-gradient(180deg, #a1a1a6, #7c7c80);
+  }
+  .avatar.sm { width: 30px; height: 30px; font-size: 13px; }
+  .room-text { min-width: 0; }
+  .room-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sub { font-size: 14px; color: var(--muted); }
+  .me-line { padding: 12px 18px; padding-bottom: max(12px, env(safe-area-inset-bottom)); border-top: 0.5px solid var(--sep); font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; }
 
-  main { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  /* ---------- Chat ---------- */
+  main { display: flex; flex-direction: column; min-height: 0; min-width: 0; position: relative; }
   header {
-    padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel);
-    display: flex; align-items: center; gap: 8px;
+    position: sticky; top: 0; z-index: 2;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top));
+    background: var(--bar);
+    backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 0.5px solid var(--sep);
   }
-  header h2 { margin: 0; font-size: 17px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #back { display: none; }
-  #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
-  .msg {
-    max-width: min(75%, 560px); padding: 8px 12px; border-radius: 14px;
-    background: var(--theirs); border: 1px solid var(--line); align-self: flex-start;
-    white-space: pre-wrap; word-wrap: break-word; overflow-wrap: anywhere;
-  }
-  .msg.mine { background: var(--mine); align-self: flex-end; border-color: transparent; }
-  .msg .who { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 2px; }
-  .msg .time { font-size: 11px; color: var(--muted); text-align: right; margin-top: 2px; }
-  .empty { margin: auto; color: var(--muted); text-align: center; }
-  form#send {
-    display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); background: var(--panel);
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
-  }
-  #status { font-size: 12px; color: var(--muted); }
+  #back { justify-self: start; display: inline-flex; visibility: hidden; align-items: center; gap: 2px; }
+  #back svg { width: 12px; height: 20px; }
+  .title { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .title b { font-size: 13px; font-weight: 500; }
+  #status { justify-self: end; font-size: 13px; color: var(--muted); }
 
-  @media (max-width: 680px) {
+  #messages {
+    flex: 1; overflow-y: auto; padding: 12px 16px 8px;
+    display: flex; flex-direction: column;
+  }
+  .empty { margin: auto; color: var(--muted); text-align: center; font-size: 15px; }
+  .stamp { align-self: center; font-size: 12px; color: var(--muted); margin: 14px 0 6px; }
+  .who { font-size: 12px; color: var(--muted); margin: 8px 0 2px 14px; }
+  .msg {
+    max-width: min(72%, 520px); padding: 8px 14px;
+    border-radius: var(--radius);
+    background: var(--bubble); align-self: flex-start;
+    white-space: pre-wrap; overflow-wrap: anywhere;
+    margin-top: 2px;
+    animation: pop .18s ease-out;
+  }
+  .msg.mine { background: var(--blue); color: #fff; align-self: flex-end; }
+  @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  form#send {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom));
+    background: var(--bar);
+    backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-top: 0.5px solid var(--sep);
+  }
+  #textInput { border-radius: 20px; padding: 8px 16px; background: transparent; border: 1px solid var(--sep); }
+  #sendBtn {
+    flex: none; width: 32px; height: 32px; border-radius: 50%;
+    background: var(--blue); display: grid; place-items: center;
+    transition: opacity .15s, transform .15s;
+  }
+  #sendBtn:disabled { opacity: .3; cursor: default; }
+  #sendBtn:not(:disabled):active { transform: scale(.9); }
+  #sendBtn svg { width: 16px; height: 16px; }
+  .placeholder { margin: auto; text-align: center; color: var(--muted); }
+
+  @media (max-width: 700px) {
     #app.on { grid-template-columns: 1fr; }
+    aside { border-right: 0; background: var(--bg); }
+    #rooms li.active { background: transparent; color: inherit; }
+    #rooms li.active .sub { color: var(--muted); }
     #app.in-room aside { display: none; }
     #app:not(.in-room) main { display: none; }
-    #back { display: inline-block; }
+    #back { visibility: visible; }
   }
 </style>
 </head>
 <body>
 
 <section id="login">
-  <form class="card" id="loginForm">
-    <h1>💬 Мессенджер</h1>
-    <p>Как тебя зовут? Это имя увидят другие.</p>
-    <input id="nameInput" maxlength="30" placeholder="Твоё имя" autocomplete="nickname" required>
-    <button type="submit">Войти</button>
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3C6.48 3 2 6.92 2 11.75c0 2.65 1.35 5.02 3.48 6.62-.12 1.3-.6 2.5-1.43 3.38 1.8-.1 3.4-.78 4.6-1.82.98.27 2.1.42 3.35.42 5.52 0 10-3.92 10-8.6S17.52 3 12 3z"/></svg>
+  </div>
+  <h1>Сообщения</h1>
+  <p>Введите имя, чтобы начать</p>
+  <form id="loginForm">
+    <input id="nameInput" maxlength="30" placeholder="Имя" autocomplete="nickname" required>
+    <button class="primary" type="submit">Продолжить</button>
   </form>
 </section>
 
 <section id="app">
   <aside>
-    <div class="me"><b id="meName"></b><button class="ghost" id="logout" type="button">Выйти</button></div>
+    <div class="side-head">
+      <div class="side-top">
+        <span></span>
+        <button class="link" id="newRoomBtn" type="button" aria-label="Новый чат">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+      <h1>Чаты</h1>
+      <form id="roomForm">
+        <input id="roomInput" maxlength="30" placeholder="Название нового чата">
+        <button class="link" type="submit">Создать</button>
+      </form>
+    </div>
     <ul id="rooms"></ul>
-    <form id="newRoom">
-      <input id="roomInput" maxlength="30" placeholder="Новая комната">
-      <button type="submit" title="Создать">+</button>
-    </form>
+    <div class="me-line"><span id="meName"></span><button class="link" id="logout" type="button" style="font-size:14px">Выйти</button></div>
   </aside>
+
   <main>
     <header>
-      <button class="ghost" id="back" type="button">←</button>
-      <h2 id="roomTitle">Выбери комнату</h2>
+      <button class="link" id="back" type="button">
+        <svg viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2 2 10l8 8"/></svg>
+        Чаты
+      </button>
+      <div class="title"><div class="avatar sm" id="roomAvatar">#</div><b id="roomTitle">Выберите чат</b></div>
       <span id="status"></span>
     </header>
-    <div id="messages"><div class="empty">Выбери комнату слева или создай новую</div></div>
+    <div id="messages"><div class="placeholder">Выберите чат слева</div></div>
     <form id="send">
-      <input id="textInput" maxlength="1000" placeholder="Сообщение…" autocomplete="off" disabled>
-      <button type="submit" id="sendBtn" disabled>➤</button>
+      <input id="textInput" maxlength="1000" placeholder="Сообщение" autocomplete="off" disabled>
+      <button type="submit" id="sendBtn" disabled aria-label="Отправить">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+      </button>
     </form>
   </main>
 </section>
@@ -134,6 +226,10 @@
 const $ = (id) => document.getElementById(id);
 const ROOM_RE = /^[\p{L}\p{N} _-]{1,30}$/u;
 const POLL_MS = 3000;
+const COLORS = [
+  ["#ff9f0a", "#ff6b00"], ["#30d158", "#00a83e"], ["#64d2ff", "#0a84ff"],
+  ["#bf5af2", "#8e3ad6"], ["#ff375f", "#d70040"], ["#ffd60a", "#ff9f0a"], ["#5e5ce6", "#3634a3"],
+];
 
 let me = null;
 let room = null;
@@ -154,6 +250,14 @@ async function api(path, opts) {
 
 function setStatus(t) { $("status").textContent = t; }
 
+function paintAvatar(el, name) {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+  const [a, b] = COLORS[h % COLORS.length];
+  el.style.background = `linear-gradient(180deg, ${a}, ${b})`;
+  el.textContent = [...name.trim()][0]?.toUpperCase() || "#";
+}
+
 /* ---------- login ---------- */
 function login(name) {
   me = name;
@@ -163,7 +267,7 @@ function login(name) {
   $("app").classList.add("on");
   loadRooms().then(() => {
     const saved = lsGet("chat.room");
-    if (saved && ROOM_RE.test(saved) && window.innerWidth > 680) openRoom(saved);
+    if (saved && ROOM_RE.test(saved) && window.innerWidth > 700) openRoom(saved);
   });
 }
 
@@ -194,21 +298,40 @@ function renderRooms() {
   ul.innerHTML = "";
   for (const r of rooms) {
     const li = document.createElement("li");
-    li.textContent = "# " + r;
     if (r === room) li.className = "active";
+    const av = document.createElement("div");
+    av.className = "avatar";
+    paintAvatar(av, r);
+    const box = document.createElement("div");
+    box.className = "room-text";
+    const nm = document.createElement("div");
+    nm.className = "room-name";
+    nm.textContent = r;
+    const sub = document.createElement("div");
+    sub.className = "sub";
+    sub.textContent = "Групповой чат";
+    box.append(nm, sub);
+    li.append(av, box);
     li.onclick = () => openRoom(r);
     ul.appendChild(li);
   }
 }
 
-$("newRoom").addEventListener("submit", (e) => {
+$("newRoomBtn").addEventListener("click", () => {
+  const f = $("roomForm");
+  f.classList.toggle("on");
+  if (f.classList.contains("on")) $("roomInput").focus();
+});
+
+$("roomForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const r = $("roomInput").value.trim();
   if (!ROOM_RE.test(r)) {
-    alert("Название: до 30 символов — буквы, цифры, пробел, _ или -");
+    alert("Название — до 30 символов: буквы, цифры, пробел, _ или -");
     return;
   }
   $("roomInput").value = "";
+  $("roomForm").classList.remove("on");
   if (!rooms.includes(r)) rooms.push(r);
   openRoom(r);
 });
@@ -217,14 +340,15 @@ function openRoom(r) {
   room = r;
   lastId = "";
   lsSet("chat.room", r);
-  $("roomTitle").textContent = "# " + r;
+  $("roomTitle").textContent = r;
+  paintAvatar($("roomAvatar"), r);
   $("messages").innerHTML = '<div class="empty">Загрузка…</div>';
   $("textInput").disabled = false;
-  $("sendBtn").disabled = false;
+  updateSendBtn();
   $("app").classList.add("in-room");
   renderRooms();
   poll(true);
-  if (window.innerWidth > 680) $("textInput").focus();
+  if (window.innerWidth > 700) $("textInput").focus();
 }
 
 $("back").addEventListener("click", () => {
@@ -233,43 +357,67 @@ $("back").addEventListener("click", () => {
 });
 
 /* ---------- messages ---------- */
-function fmtTime(ts) {
+function dayLabel(ts) {
   const d = new Date(ts);
   const now = new Date();
-  const t = d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-  return d.toDateString() === now.toDateString() ? t : d.toLocaleDateString("ru-RU") + " " + t;
+  const time = d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  if (d.toDateString() === now.toDateString()) return "Сегодня " + time;
+  const y = new Date(now); y.setDate(now.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return "Вчера " + time;
+  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" }) + " " + time;
 }
 
-function addMessages(list, fromPoll) {
+function render(list) {
+  // Rebuilds the visible thread from the message cache, so grouping stays correct.
   const box = $("messages");
+  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  box.innerHTML = "";
   if (!list.length) {
-    if (!box.querySelector(".msg")) box.innerHTML = '<div class="empty">Тут пока пусто. Напиши первым!</div>';
+    box.innerHTML = '<div class="empty">Сообщений пока нет</div>';
     return;
   }
-  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
-  const empty = box.querySelector(".empty");
-  if (empty) empty.remove();
+  let prev = null;
   for (const m of list) {
-    if (fromPoll && m.id > lastId) lastId = m.id;
-    if (box.querySelector(`[data-id="${m.id}"]`)) continue;
-    const div = document.createElement("div");
-    div.className = "msg" + (m.name === me ? " mine" : "");
-    div.dataset.id = m.id;
-    if (m.name !== me) {
+    if (!prev || m.ts - prev.ts > 15 * 60 * 1000) {
+      const s = document.createElement("div");
+      s.className = "stamp";
+      s.textContent = dayLabel(m.ts);
+      box.appendChild(s);
+      prev = null;
+    }
+    const mine = m.name === me;
+    if (!mine && (!prev || prev.name !== m.name)) {
       const who = document.createElement("div");
       who.className = "who";
       who.textContent = m.name;
-      div.appendChild(who);
+      box.appendChild(who);
     }
-    div.appendChild(document.createTextNode(m.text));
-    const time = document.createElement("div");
-    time.className = "time";
-    time.textContent = fmtTime(m.ts);
-    div.appendChild(time);
-    const after = [...box.querySelectorAll(".msg")].find((el) => el.dataset.id > m.id);
-    box.insertBefore(div, after || null);
+    const div = document.createElement("div");
+    div.className = "msg" + (mine ? " mine" : "");
+    div.textContent = m.text;
+    div.title = new Date(m.ts).toLocaleString("ru-RU");
+    if (prev && prev.name === m.name) div.style.marginTop = "2px";
+    else div.style.marginTop = mine ? "8px" : "0";
+    box.appendChild(div);
+    prev = m;
   }
-  if (atBottom || list.some((m) => m.name === me)) box.scrollTop = box.scrollHeight;
+  if (atBottom || renderScroll) box.scrollTop = box.scrollHeight;
+  renderScroll = false;
+}
+
+let cache = [];
+let renderScroll = false;
+
+function addMessages(list, fromPoll) {
+  let changed = false;
+  for (const m of list) {
+    if (fromPoll && m.id > lastId) lastId = m.id;
+    if (cache.some((c) => c.id === m.id)) continue;
+    cache.push(m);
+    changed = true;
+  }
+  cache.sort((a, b) => (a.id < b.id ? -1 : 1));
+  if (changed || !cache.length) render(cache);
 }
 
 async function poll(first) {
@@ -278,16 +426,16 @@ async function poll(first) {
   if (polling && !first) return schedule();
   polling = true;
   const forRoom = room;
+  if (first) { cache = []; renderScroll = true; }
   try {
     const q = "room=" + encodeURIComponent(forRoom) + (lastId ? "&since=" + lastId : "");
     const data = await api("messages?" + q);
     if (forRoom === room) {
       addMessages(data.messages, true);
-      if (first) $("messages").scrollTop = $("messages").scrollHeight;
       setStatus("");
     }
   } catch (err) {
-    setStatus("нет связи…");
+    setStatus("Нет связи");
   } finally {
     polling = false;
     schedule();
@@ -304,22 +452,29 @@ document.addEventListener("visibilitychange", () => {
   else clearTimeout(pollTimer);
 });
 
+function updateSendBtn() {
+  $("sendBtn").disabled = !room || !$("textInput").value.trim();
+}
+$("textInput").addEventListener("input", updateSendBtn);
+
 $("send").addEventListener("submit", async (e) => {
   e.preventDefault();
   const input = $("textInput");
   const text = input.value.trim();
   if (!text || !room) return;
   input.value = "";
+  updateSendBtn();
   try {
     const msg = await api("messages", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ room, name: me, text }),
     });
-    if (msg.room === room) addMessages([msg], false);
+    if (msg.room === room) { renderScroll = true; addMessages([msg], false); }
     if (!rooms.includes(room)) { rooms.push(room); renderRooms(); }
   } catch (err) {
     input.value = text;
+    updateSendBtn();
     alert("Не отправилось: " + err.message);
   }
   input.focus();

@@ -16,6 +16,7 @@
     --muted: #86868b;
     --sep: rgba(60, 60, 67, 0.12);
     --blue: #007aff;
+    --red: #ff3b30;
     --bubble: #e9e9eb;
     --field: rgba(118, 118, 128, 0.12);
     --bar: rgba(255, 255, 255, 0.72);
@@ -29,6 +30,7 @@
       --muted: #8e8e93;
       --sep: rgba(84, 84, 88, 0.45);
       --blue: #0a84ff;
+      --red: #ff453a;
       --bubble: #26252a;
       --field: rgba(118, 118, 128, 0.24);
       --bar: rgba(22, 22, 24, 0.72);
@@ -47,6 +49,8 @@
   button { background: none; border: 0; padding: 0; cursor: pointer; }
   input { border: 0; outline: none; background: var(--field); border-radius: 10px; padding: 9px 14px; width: 100%; }
   input::placeholder { color: var(--muted); }
+  [hidden] { display: none !important; }
+  svg { display: block; }
 
   /* ---------- Welcome ---------- */
   #login {
@@ -62,15 +66,17 @@
   }
   .logo svg { width: 40px; height: 40px; }
   #login h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; }
-  #login p { color: var(--muted); margin: 0 0 32px; }
-  #loginForm { width: 100%; max-width: 320px; display: grid; gap: 12px; }
-  #loginForm input { padding: 14px 16px; border-radius: 12px; text-align: center; }
+  #login p { color: var(--muted); margin: 0 0 32px; max-width: 320px; }
+  #loginForm { width: 100%; max-width: 320px; display: grid; gap: 10px; }
+  #loginForm input { padding: 14px 16px; border-radius: 12px; }
+  #loginError { color: var(--red); font-size: 14px; min-height: 18px; }
   .primary {
     background: var(--blue); color: #fff; font-weight: 600;
-    border-radius: 12px; padding: 14px 16px;
+    border-radius: 12px; padding: 14px 16px; margin-top: 4px;
     transition: opacity .15s;
   }
   .primary:active { opacity: .7; }
+  .primary:disabled { opacity: .5; }
 
   /* ---------- Layout ---------- */
   #app { height: 100%; display: none; grid-template-columns: 320px 1fr; }
@@ -84,27 +90,37 @@
   .side-top { display: flex; justify-content: space-between; align-items: center; min-height: 32px; }
   .link { color: var(--blue); font-size: 17px; }
   .link:active { opacity: .5; }
-  .side-head h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; margin: 4px 0 10px; }
-  #roomForm { display: none; gap: 8px; }
-  #roomForm.on { display: flex; }
+  .side-head h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; margin: 4px 0 6px; }
 
-  #rooms { list-style: none; margin: 0; padding: 0 8px 8px; overflow-y: auto; flex: 1; }
-  #rooms li {
+  #newPanel { padding: 4px 0 6px; display: grid; gap: 10px; }
+  .segment { display: grid; grid-template-columns: 1fr 1fr; background: var(--field); border-radius: 9px; padding: 2px; }
+  .segment button { border-radius: 7px; padding: 5px 0; font-size: 14px; font-weight: 500; }
+  .segment button.on { background: var(--bg); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  #groupForm { display: flex; gap: 8px; }
+  #userList { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; }
+  #userList li { padding: 8px 6px; display: flex; gap: 10px; align-items: center; border-radius: 10px; cursor: pointer; }
+  #userList li:active { opacity: .6; }
+  #userList .hint { color: var(--muted); font-size: 14px; cursor: default; }
+
+  #convs { list-style: none; margin: 0; padding: 0 8px 8px; overflow-y: auto; flex: 1; }
+  .section { font-size: 13px; color: var(--muted); padding: 12px 10px 4px; text-transform: uppercase; letter-spacing: .02em; }
+  #convs li.conv {
     display: flex; align-items: center; gap: 12px;
-    padding: 10px 10px; border-radius: 12px; cursor: pointer;
+    padding: 10px; border-radius: 12px; cursor: pointer;
   }
-  #rooms li:active { opacity: .6; }
-  #rooms li.active { background: var(--blue); color: #fff; }
-  #rooms li.active .sub { color: rgba(255, 255, 255, .75); }
+  #convs li.conv:active { opacity: .6; }
+  #convs li.conv.active { background: var(--blue); color: #fff; }
+  #convs li.conv.active .sub { color: rgba(255, 255, 255, .75); }
   .avatar {
     flex: none; width: 44px; height: 44px; border-radius: 50%;
     display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 18px;
     background: linear-gradient(180deg, #a1a1a6, #7c7c80);
   }
   .avatar.sm { width: 30px; height: 30px; font-size: 13px; }
-  .room-text { min-width: 0; }
-  .room-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sub { font-size: 14px; color: var(--muted); }
+  .avatar.xs { width: 32px; height: 32px; font-size: 14px; }
+  .conv-text { min-width: 0; flex: 1; }
+  .conv-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sub { font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .me-line { padding: 12px 18px; padding-bottom: max(12px, env(safe-area-inset-bottom)); border-top: 0.5px solid var(--sep); font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; }
 
   /* ---------- Chat ---------- */
@@ -127,7 +143,8 @@
     flex: 1; overflow-y: auto; padding: 12px 16px 8px;
     display: flex; flex-direction: column;
   }
-  .empty { margin: auto; color: var(--muted); text-align: center; font-size: 15px; }
+  #messages > * { flex-shrink: 0; }
+  .empty, .placeholder { margin: auto; color: var(--muted); text-align: center; font-size: 15px; }
   .stamp { align-self: center; font-size: 12px; color: var(--muted); margin: 14px 0 6px; }
   .who { font-size: 12px; color: var(--muted); margin: 8px 0 2px 14px; }
   .msg {
@@ -139,31 +156,63 @@
     animation: pop .18s ease-out;
   }
   .msg.mine { background: var(--blue); color: #fff; align-self: flex-end; }
+  .msg.media { padding: 0; overflow: hidden; background: transparent; line-height: 0; max-width: min(260px, 72%); }
+  .msg.media img, .msg.media video {
+    display: block; max-width: 100%; max-height: 340px; width: auto; height: auto;
+    border-radius: var(--radius); cursor: pointer; background: var(--field);
+  }
+  .msg.media video { cursor: default; }
   @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
 
+  /* voice bubble */
+  .voice { display: flex; align-items: center; gap: 10px; min-width: 190px; padding: 2px 0; }
+  .voice .play {
+    flex: none; width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--blue); color: #fff;
+  }
+  .msg.mine .voice .play { background: #fff; color: var(--blue); }
+  .voice .play svg { width: 12px; height: 12px; }
+  .voice .track { flex: 1; height: 4px; border-radius: 2px; background: rgba(128,128,128,.35); position: relative; cursor: pointer; }
+  .msg.mine .voice .track { background: rgba(255,255,255,.4); }
+  .voice .fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 2px; background: currentColor; }
+  .voice .time { font-size: 13px; font-variant-numeric: tabular-nums; opacity: .8; min-width: 34px; text-align: right; }
+
+  /* composer: controls on the left, away from the Netlify badge in the bottom-right corner */
   form#send {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 6px;
     padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom));
     background: var(--bar);
     backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-top: 0.5px solid var(--sep);
   }
-  #textInput { border-radius: 20px; padding: 8px 16px; background: transparent; border: 1px solid var(--sep); }
-  #sendBtn {
-    flex: none; width: 32px; height: 32px; border-radius: 50%;
-    background: var(--blue); display: grid; place-items: center;
+  .icon-btn {
+    flex: none; width: 34px; height: 34px; border-radius: 50%;
+    display: grid; place-items: center; color: var(--muted);
     transition: opacity .15s, transform .15s;
   }
-  #sendBtn:disabled { opacity: .3; cursor: default; }
-  #sendBtn:not(:disabled):active { transform: scale(.9); }
+  .icon-btn:active { transform: scale(.9); }
+  .icon-btn:disabled { opacity: .3; cursor: default; }
+  .icon-btn svg { width: 22px; height: 22px; }
+  #sendBtn { background: var(--blue); color: #fff; width: 32px; height: 32px; }
   #sendBtn svg { width: 16px; height: 16px; }
-  .placeholder { margin: auto; text-align: center; color: var(--muted); }
+  #textInput { border-radius: 20px; padding: 8px 16px; background: transparent; border: 1px solid var(--sep); flex: 1; min-width: 0; }
+  #recBar { flex: 1; display: flex; align-items: center; gap: 10px; padding: 0 6px; min-width: 0; }
+  #recBar .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--red); animation: blink 1s infinite; }
+  #recTime { font-variant-numeric: tabular-nums; }
+  #recCancel { margin-left: auto; color: var(--red); font-size: 15px; }
+  @keyframes blink { 50% { opacity: .2; } }
+
+  #viewer {
+    position: fixed; inset: 0; z-index: 10; background: rgba(0,0,0,.92);
+    display: grid; place-items: center; cursor: zoom-out;
+  }
+  #viewer img { max-width: 100vw; max-height: 100vh; object-fit: contain; }
 
   @media (max-width: 700px) {
     #app.on { grid-template-columns: 1fr; }
     aside { border-right: 0; background: var(--bg); }
-    #rooms li.active { background: transparent; color: inherit; }
-    #rooms li.active .sub { color: var(--muted); }
+    #convs li.conv.active { background: transparent; color: inherit; }
+    #convs li.conv.active .sub { color: var(--muted); }
     #app.in-room aside { display: none; }
     #app:not(.in-room) main { display: none; }
     #back { visibility: visible; }
@@ -177,10 +226,12 @@
     <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3C6.48 3 2 6.92 2 11.75c0 2.65 1.35 5.02 3.48 6.62-.12 1.3-.6 2.5-1.43 3.38 1.8-.1 3.4-.78 4.6-1.82.98.27 2.1.42 3.35.42 5.52 0 10-3.92 10-8.6S17.52 3 12 3z"/></svg>
   </div>
   <h1>Сообщения</h1>
-  <p>Введите имя, чтобы начать</p>
+  <p>Впервые здесь? Придумай имя и пароль — аккаунт создастся сам.</p>
   <form id="loginForm">
-    <input id="nameInput" maxlength="30" placeholder="Имя" autocomplete="nickname" required>
-    <button class="primary" type="submit">Продолжить</button>
+    <input id="nameInput" maxlength="30" placeholder="Имя" autocomplete="username" required>
+    <input id="passInput" type="password" minlength="4" placeholder="Пароль" autocomplete="current-password" required>
+    <div id="loginError"></div>
+    <button class="primary" type="submit" id="loginBtn">Продолжить</button>
   </form>
 </section>
 
@@ -189,17 +240,27 @@
     <div class="side-head">
       <div class="side-top">
         <span></span>
-        <button class="link" id="newRoomBtn" type="button" aria-label="Новый чат">
+        <button class="link" id="newBtn" type="button" aria-label="Новый чат">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
       </div>
       <h1>Чаты</h1>
-      <form id="roomForm">
-        <input id="roomInput" maxlength="30" placeholder="Название нового чата">
-        <button class="link" type="submit">Создать</button>
-      </form>
+      <div id="newPanel" hidden>
+        <div class="segment">
+          <button type="button" id="segDm" class="on">Личное</button>
+          <button type="button" id="segGroup">Группа</button>
+        </div>
+        <div id="dmPick">
+          <input id="userSearch" placeholder="Поиск по имени" autocomplete="off">
+          <ul id="userList"></ul>
+        </div>
+        <form id="groupForm" hidden>
+          <input id="groupInput" maxlength="30" placeholder="Название группы">
+          <button class="link" type="submit">Создать</button>
+        </form>
+      </div>
     </div>
-    <ul id="rooms"></ul>
+    <ul id="convs"></ul>
     <div class="me-line"><span id="meName"></span><button class="link" id="logout" type="button" style="font-size:14px">Выйти</button></div>
   </aside>
 
@@ -209,46 +270,74 @@
         <svg viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2 2 10l8 8"/></svg>
         Чаты
       </button>
-      <div class="title"><div class="avatar sm" id="roomAvatar">#</div><b id="roomTitle">Выберите чат</b></div>
+      <div class="title"><div class="avatar sm" id="convAvatar">#</div><b id="convTitle">Выберите чат</b></div>
       <span id="status"></span>
     </header>
     <div id="messages"><div class="placeholder">Выберите чат слева</div></div>
     <form id="send">
-      <input id="textInput" maxlength="1000" placeholder="Сообщение" autocomplete="off" disabled>
-      <button type="submit" id="sendBtn" disabled aria-label="Отправить">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+      <button type="submit" id="sendBtn" class="icon-btn" disabled aria-label="Отправить">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
       </button>
+      <button type="button" id="attachBtn" class="icon-btn" disabled aria-label="Фото или видео">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m21 15-4.5-4.5L8 19"/></svg>
+      </button>
+      <button type="button" id="micBtn" class="icon-btn" disabled aria-label="Голосовое сообщение">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+      </button>
+      <input id="textInput" maxlength="1000" placeholder="Сообщение" autocomplete="off" disabled>
+      <div id="recBar" hidden><span class="dot"></span><span id="recTime">0:00</span><button type="button" id="recCancel">Отмена</button></div>
+      <input type="file" id="fileInput" accept="image/*,video/*" hidden>
     </form>
   </main>
 </section>
+
+<div id="viewer" hidden><img alt=""></div>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const ROOM_RE = /^[\p{L}\p{N} _-]{1,30}$/u;
 const POLL_MS = 3000;
+const CONV_POLL_MS = 15000;
+const MAX_UPLOAD = 4 * 1024 * 1024;
+const MAX_VOICE_SEC = 300;
 const COLORS = [
   ["#ff9f0a", "#ff6b00"], ["#30d158", "#00a83e"], ["#64d2ff", "#0a84ff"],
   ["#bf5af2", "#8e3ad6"], ["#ff375f", "#d70040"], ["#ffd60a", "#ff9f0a"], ["#5e5ce6", "#3634a3"],
 ];
+const ICON_PLAY = '<svg viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 1.2v9.6L10.5 6z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="1.5" width="2.8" height="9" rx=".6"/><rect x="7.2" y="1.5" width="2.8" height="9" rx=".6"/></svg>';
 
+let token = null;
 let me = null;
-let room = null;
+let conv = null;          // { kind: "room" | "dm", id }
 let lastId = "";
-let rooms = [];
+let convData = { rooms: [], dms: [] };
+let cache = [];
+let renderedIds = [];
 let pollTimer = null;
+let convTimer = null;
 let polling = false;
+let busy = 0;
 
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} }
 
-async function api(path, opts) {
-  const res = await fetch("/api/" + path, opts);
+async function api(path, opts = {}) {
+  const headers = { ...(opts.headers || {}) };
+  if (token) headers.authorization = "Bearer " + token;
+  if (opts.json) { headers["content-type"] = "application/json"; opts.body = JSON.stringify(opts.json); }
+  const res = await fetch("/api/" + path, { method: opts.method || "GET", headers, body: opts.body });
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401 && path !== "auth") { logout(); throw new Error("Нужно войти заново"); }
   if (!res.ok) throw new Error(data.error || "Ошибка " + res.status);
   return data;
 }
 
 function setStatus(t) { $("status").textContent = t; }
+function setBusy(delta) {
+  busy += delta;
+  setStatus(busy > 0 ? "Отправка…" : "");
+}
 
 function paintAvatar(el, name) {
   let h = 0;
@@ -257,106 +346,205 @@ function paintAvatar(el, name) {
   el.style.background = `linear-gradient(180deg, ${a}, ${b})`;
   el.textContent = [...name.trim()][0]?.toUpperCase() || "#";
 }
+function avatarEl(name, cls = "avatar") {
+  const el = document.createElement("div");
+  el.className = cls;
+  paintAvatar(el, name);
+  return el;
+}
 
 /* ---------- login ---------- */
-function login(name) {
+$("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("loginError").textContent = "";
+  $("loginBtn").disabled = true;
+  try {
+    const data = await api("auth", { method: "POST", json: { name: $("nameInput").value, password: $("passInput").value } });
+    token = data.token;
+    lsSet("chat.token", token);
+    lsSet("chat.name", data.name);
+    $("passInput").value = "";
+    start(data.name);
+  } catch (err) {
+    $("loginError").textContent = err.message;
+  } finally {
+    $("loginBtn").disabled = false;
+  }
+});
+
+function start(name) {
   me = name;
-  lsSet("chat.name", name);
   $("meName").textContent = name;
   $("login").style.display = "none";
   $("app").classList.add("on");
-  loadRooms().then(() => {
-    const saved = lsGet("chat.room");
-    if (saved && ROOM_RE.test(saved) && window.innerWidth > 700) openRoom(saved);
+  loadConvs().then(() => {
+    const saved = JSON.parse(lsGet("chat.conv") || "null");
+    if (saved && window.innerWidth > 700) openConv(saved);
   });
+  scheduleConvs();
 }
 
-$("loginForm").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const name = $("nameInput").value.trim();
-  if (name) login(name);
-});
-
-$("logout").addEventListener("click", () => {
-  lsSet("chat.name", null);
+function logout() {
+  token = null;
+  lsSet("chat.token", null);
+  lsSet("chat.conv", null);
   location.reload();
-});
+}
+$("logout").addEventListener("click", logout);
 
-/* ---------- rooms ---------- */
-async function loadRooms() {
+/* ---------- conversation list ---------- */
+async function loadConvs() {
   try {
-    const data = await api("rooms");
-    rooms = data.rooms;
-    if (!rooms.includes("Общий")) rooms.unshift("Общий");
-    if (room && !rooms.includes(room)) rooms.push(room);
-    renderRooms();
+    convData = await api("conversations");
+    renderConvs();
   } catch (err) { setStatus(err.message); }
 }
 
-function renderRooms() {
-  const ul = $("rooms");
+function scheduleConvs() {
+  clearTimeout(convTimer);
+  convTimer = setTimeout(async () => {
+    if (document.visibilityState === "visible") await loadConvs();
+    scheduleConvs();
+  }, CONV_POLL_MS);
+}
+
+function convItem(kind, id, sub) {
+  const li = document.createElement("li");
+  li.className = "conv" + (conv && conv.kind === kind && conv.id.toLowerCase() === id.toLowerCase() ? " active" : "");
+  const box = document.createElement("div");
+  box.className = "conv-text";
+  const nm = document.createElement("div");
+  nm.className = "conv-name";
+  nm.textContent = id;
+  const s = document.createElement("div");
+  s.className = "sub";
+  s.textContent = sub;
+  box.append(nm, s);
+  li.append(avatarEl(id), box);
+  li.onclick = () => openConv({ kind, id });
+  return li;
+}
+
+function renderConvs() {
+  const ul = $("convs");
   ul.innerHTML = "";
-  for (const r of rooms) {
+  const dms = [...convData.dms];
+  if (conv && conv.kind === "dm" && !dms.some((d) => d.with.toLowerCase() === conv.id.toLowerCase())) {
+    dms.unshift({ with: conv.id, last: "Новый чат" });
+  }
+  const rooms = [...convData.rooms];
+  if (!rooms.includes("Общий")) rooms.unshift("Общий");
+  if (conv && conv.kind === "room" && !rooms.includes(conv.id)) rooms.push(conv.id);
+
+  if (dms.length) {
+    const h = document.createElement("li");
+    h.className = "section";
+    h.textContent = "Личные";
+    ul.appendChild(h);
+    for (const d of dms) ul.appendChild(convItem("dm", d.with, d.last || ""));
+  }
+  const h2 = document.createElement("li");
+  h2.className = "section";
+  h2.textContent = "Группы";
+  ul.appendChild(h2);
+  for (const r of rooms) ul.appendChild(convItem("room", r, "Группа"));
+}
+
+/* ---------- new chat panel ---------- */
+$("newBtn").addEventListener("click", () => {
+  const p = $("newPanel");
+  p.hidden = !p.hidden;
+  if (!p.hidden) { setSegment("dm"); }
+});
+$("segDm").addEventListener("click", () => setSegment("dm"));
+$("segGroup").addEventListener("click", () => setSegment("group"));
+
+function setSegment(which) {
+  $("segDm").classList.toggle("on", which === "dm");
+  $("segGroup").classList.toggle("on", which === "group");
+  $("dmPick").hidden = which !== "dm";
+  $("groupForm").hidden = which !== "group";
+  if (which === "dm") { $("userSearch").value = ""; searchUsers(); $("userSearch").focus(); }
+  else $("groupInput").focus();
+}
+
+let searchTimer = null;
+$("userSearch").addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(searchUsers, 300);
+});
+
+async function searchUsers() {
+  const ul = $("userList");
+  try {
+    const { users } = await api("users?q=" + encodeURIComponent($("userSearch").value.trim()));
+    ul.innerHTML = "";
+    if (!users.length) {
+      ul.innerHTML = '<li class="hint">Никого не нашлось. Друг должен сначала зайти в мессенджер.</li>';
+      return;
+    }
+    for (const u of users) {
+      const li = document.createElement("li");
+      const span = document.createElement("span");
+      span.textContent = u;
+      li.append(avatarEl(u, "avatar xs"), span);
+      li.onclick = () => { $("newPanel").hidden = true; openConv({ kind: "dm", id: u }); };
+      ul.appendChild(li);
+    }
+  } catch (err) {
+    ul.innerHTML = "";
     const li = document.createElement("li");
-    if (r === room) li.className = "active";
-    const av = document.createElement("div");
-    av.className = "avatar";
-    paintAvatar(av, r);
-    const box = document.createElement("div");
-    box.className = "room-text";
-    const nm = document.createElement("div");
-    nm.className = "room-name";
-    nm.textContent = r;
-    const sub = document.createElement("div");
-    sub.className = "sub";
-    sub.textContent = "Групповой чат";
-    box.append(nm, sub);
-    li.append(av, box);
-    li.onclick = () => openRoom(r);
+    li.className = "hint";
+    li.textContent = err.message;
     ul.appendChild(li);
   }
 }
 
-$("newRoomBtn").addEventListener("click", () => {
-  const f = $("roomForm");
-  f.classList.toggle("on");
-  if (f.classList.contains("on")) $("roomInput").focus();
-});
-
-$("roomForm").addEventListener("submit", (e) => {
+$("groupForm").addEventListener("submit", (e) => {
   e.preventDefault();
-  const r = $("roomInput").value.trim();
+  const r = $("groupInput").value.trim();
   if (!ROOM_RE.test(r)) {
     alert("Название — до 30 символов: буквы, цифры, пробел, _ или -");
     return;
   }
-  $("roomInput").value = "";
-  $("roomForm").classList.remove("on");
-  if (!rooms.includes(r)) rooms.push(r);
-  openRoom(r);
+  $("groupInput").value = "";
+  $("newPanel").hidden = true;
+  openConv({ kind: "room", id: r });
 });
 
-function openRoom(r) {
-  room = r;
+/* ---------- open conversation ---------- */
+function convQuery() {
+  return conv.kind === "dm" ? "dm=" + encodeURIComponent(conv.id) : "room=" + encodeURIComponent(conv.id);
+}
+function convBody() {
+  return conv.kind === "dm" ? { dm: conv.id } : { room: conv.id };
+}
+
+function openConv(c) {
+  if (recorder) cancelRecording();
+  conv = c;
   lastId = "";
-  lsSet("chat.room", r);
-  $("roomTitle").textContent = r;
-  paintAvatar($("roomAvatar"), r);
+  cache = [];
+  renderedIds = [];
+  lsSet("chat.conv", JSON.stringify(c));
+  $("convTitle").textContent = c.id;
+  paintAvatar($("convAvatar"), c.id);
   $("messages").innerHTML = '<div class="empty">Загрузка…</div>';
-  $("textInput").disabled = false;
+  for (const id of ["textInput", "attachBtn", "micBtn"]) $(id).disabled = false;
   updateSendBtn();
   $("app").classList.add("in-room");
-  renderRooms();
+  renderConvs();
   poll(true);
   if (window.innerWidth > 700) $("textInput").focus();
 }
 
 $("back").addEventListener("click", () => {
+  if (recorder) cancelRecording();
   $("app").classList.remove("in-room");
-  loadRooms();
+  loadConvs();
 });
 
-/* ---------- messages ---------- */
+/* ---------- rendering ---------- */
 function dayLabel(ts) {
   const d = new Date(ts);
   const now = new Date();
@@ -367,75 +555,173 @@ function dayLabel(ts) {
   return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" }) + " " + time;
 }
 
-function render(list) {
-  // Rebuilds the visible thread from the message cache, so grouping stays correct.
-  const box = $("messages");
-  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
-  box.innerHTML = "";
-  if (!list.length) {
-    box.innerHTML = '<div class="empty">Сообщений пока нет</div>';
-    return;
-  }
-  let prev = null;
-  for (const m of list) {
-    if (!prev || m.ts - prev.ts > 15 * 60 * 1000) {
-      const s = document.createElement("div");
-      s.className = "stamp";
-      s.textContent = dayLabel(m.ts);
-      box.appendChild(s);
-      prev = null;
-    }
-    const mine = m.name === me;
-    if (!mine && (!prev || prev.name !== m.name)) {
-      const who = document.createElement("div");
-      who.className = "who";
-      who.textContent = m.name;
-      box.appendChild(who);
-    }
-    const div = document.createElement("div");
-    div.className = "msg" + (mine ? " mine" : "");
-    div.textContent = m.text;
-    div.title = new Date(m.ts).toLocaleString("ru-RU");
-    if (prev && prev.name === m.name) div.style.marginTop = "2px";
-    else div.style.marginTop = mine ? "8px" : "0";
-    box.appendChild(div);
-    prev = m;
-  }
-  if (atBottom || renderScroll) box.scrollTop = box.scrollHeight;
-  renderScroll = false;
+function fmtDur(sec) {
+  sec = Math.max(0, Math.round(sec || 0));
+  return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
 }
 
-let cache = [];
-let renderScroll = false;
+function voiceBubble(m) {
+  const wrap = document.createElement("div");
+  wrap.className = "voice";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "play";
+  btn.innerHTML = ICON_PLAY;
+  btn.setAttribute("aria-label", "Воспроизвести");
+  const track = document.createElement("div");
+  track.className = "track";
+  const fill = document.createElement("div");
+  fill.className = "fill";
+  track.appendChild(fill);
+  const time = document.createElement("span");
+  time.className = "time";
+  time.textContent = fmtDur(m.media.dur);
+  wrap.append(btn, track, time);
+
+  let audio = null;
+  const ensure = () => {
+    if (audio) return audio;
+    audio = new Audio("/api/media/" + m.media.id);
+    audio.preload = "auto";
+    audio.addEventListener("timeupdate", () => {
+      const d = isFinite(audio.duration) ? audio.duration : m.media.dur || 1;
+      fill.style.width = Math.min(100, (audio.currentTime / d) * 100) + "%";
+      time.textContent = fmtDur(audio.currentTime);
+    });
+    audio.addEventListener("play", () => {
+      document.querySelectorAll("audio, video").forEach((x) => x !== audio && x.pause());
+      if (window.__playing && window.__playing !== audio) window.__playing.pause();
+      window.__playing = audio;
+      btn.innerHTML = ICON_PAUSE;
+    });
+    audio.addEventListener("pause", () => { btn.innerHTML = ICON_PLAY; });
+    audio.addEventListener("ended", () => {
+      btn.innerHTML = ICON_PLAY;
+      fill.style.width = "0";
+      time.textContent = fmtDur(m.media.dur);
+    });
+    return audio;
+  };
+  btn.onclick = () => {
+    const a = ensure();
+    a.paused ? a.play().catch(() => alert("Не удалось воспроизвести")) : a.pause();
+  };
+  track.onclick = (e) => {
+    const a = ensure();
+    const r = track.getBoundingClientRect();
+    const d = isFinite(a.duration) ? a.duration : m.media.dur || 0;
+    if (d) a.currentTime = ((e.clientX - r.left) / r.width) * d;
+  };
+  return wrap;
+}
+
+function messageEl(m, prev) {
+  const frag = document.createDocumentFragment();
+  const newBlock = !prev || m.ts - prev.ts > 15 * 60 * 1000;
+  if (newBlock) {
+    const s = document.createElement("div");
+    s.className = "stamp";
+    s.textContent = dayLabel(m.ts);
+    frag.appendChild(s);
+  }
+  const mine = m.name === me;
+  const sameAuthor = !newBlock && prev && prev.name === m.name;
+  if (!mine && !sameAuthor && conv.kind === "room") {
+    const who = document.createElement("div");
+    who.className = "who";
+    who.textContent = m.name;
+    frag.appendChild(who);
+  }
+  const div = document.createElement("div");
+  div.className = "msg" + (mine ? " mine" : "");
+  div.title = new Date(m.ts).toLocaleString("ru-RU");
+  div.style.marginTop = sameAuthor ? "2px" : (mine || conv.kind === "dm" ? "8px" : "0");
+  const src = m.media ? "/api/media/" + m.media.id : "";
+
+  if (m.type === "image") {
+    div.classList.add("media");
+    const img = document.createElement("img");
+    img.src = src;
+    img.loading = "lazy";
+    img.alt = "Фото";
+    if (m.media.w && m.media.h) { img.width = m.media.w; img.height = m.media.h; }
+    img.onclick = () => { $("viewer").querySelector("img").src = src; $("viewer").hidden = false; };
+    div.appendChild(img);
+  } else if (m.type === "video") {
+    div.classList.add("media");
+    const v = document.createElement("video");
+    v.src = src + "#t=0.1";
+    v.controls = true;
+    v.playsInline = true;
+    v.preload = "metadata";
+    v.addEventListener("play", () => { if (window.__playing) window.__playing.pause(); });
+    div.appendChild(v);
+  } else if (m.type === "audio") {
+    div.appendChild(voiceBubble(m));
+  } else {
+    div.textContent = m.text;
+  }
+  frag.appendChild(div);
+  return frag;
+}
+
+function render(full) {
+  const box = $("messages");
+  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+  if (full) {
+    box.innerHTML = "";
+    renderedIds = [];
+  }
+  if (!cache.length) {
+    box.innerHTML = '<div class="empty">' + (conv.kind === "dm" ? "Напишите первое сообщение" : "Сообщений пока нет") + "</div>";
+    return;
+  }
+  const empty = box.querySelector(".empty, .placeholder");
+  if (empty) empty.remove();
+  const start = renderedIds.length;
+  for (let i = start; i < cache.length; i++) {
+    box.appendChild(messageEl(cache[i], cache[i - 1]));
+    renderedIds.push(cache[i].id);
+  }
+  if (atBottom || full || cache.slice(start).some((m) => m.name === me)) {
+    box.scrollTop = box.scrollHeight;
+    // Images load after insertion; keep the view pinned to the bottom when they do.
+    box.querySelectorAll("img").forEach((img) => {
+      if (!img.complete) img.addEventListener("load", () => { if (box.scrollHeight - box.scrollTop - box.clientHeight < 400) box.scrollTop = box.scrollHeight; }, { once: true });
+    });
+  }
+}
 
 function addMessages(list, fromPoll) {
-  let changed = false;
+  let added = false;
   for (const m of list) {
     if (fromPoll && m.id > lastId) lastId = m.id;
     if (cache.some((c) => c.id === m.id)) continue;
     cache.push(m);
-    changed = true;
+    added = true;
   }
+  if (!added) { if (!cache.length) render(true); return; }
   cache.sort((a, b) => (a.id < b.id ? -1 : 1));
-  if (changed || !cache.length) render(cache);
+  // Only rebuild when something landed before an already-rendered message.
+  const inOrder = renderedIds.every((id, i) => cache[i] && cache[i].id === id);
+  render(!inOrder);
 }
 
+/* ---------- polling ---------- */
 async function poll(first) {
   clearTimeout(pollTimer);
-  if (!room) return;
+  if (!conv) return;
   if (polling && !first) return schedule();
   polling = true;
-  const forRoom = room;
-  if (first) { cache = []; renderScroll = true; }
+  const forConv = JSON.stringify(conv);
   try {
-    const q = "room=" + encodeURIComponent(forRoom) + (lastId ? "&since=" + lastId : "");
-    const data = await api("messages?" + q);
-    if (forRoom === room) {
+    const data = await api("messages?" + convQuery() + (lastId ? "&since=" + lastId : ""));
+    if (forConv === JSON.stringify(conv)) {
       addMessages(data.messages, true);
-      setStatus("");
+      if (!busy) setStatus("");
     }
   } catch (err) {
-    setStatus("Нет связи");
+    setStatus(err.message === "Failed to fetch" ? "Нет связи" : err.message);
   } finally {
     polling = false;
     schedule();
@@ -448,30 +734,33 @@ function schedule() {
 }
 
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") poll(false);
+  if (document.visibilityState === "visible") { poll(false); loadConvs(); }
   else clearTimeout(pollTimer);
 });
 
+/* ---------- sending ---------- */
+async function sendMessage(payload) {
+  const target = conv;
+  const msg = await api("messages", { method: "POST", json: { ...convBody(), ...payload } });
+  if (JSON.stringify(target) === JSON.stringify(conv)) addMessages([msg], false);
+  if (conv.kind === "dm" || !convData.rooms.includes(conv.id)) loadConvs();
+}
+
 function updateSendBtn() {
-  $("sendBtn").disabled = !room || !$("textInput").value.trim();
+  $("sendBtn").disabled = !conv || (!recorder && !$("textInput").value.trim());
 }
 $("textInput").addEventListener("input", updateSendBtn);
 
 $("send").addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (recorder) { stopRecording(true); return; }
   const input = $("textInput");
   const text = input.value.trim();
-  if (!text || !room) return;
+  if (!text || !conv) return;
   input.value = "";
   updateSendBtn();
   try {
-    const msg = await api("messages", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ room, name: me, text }),
-    });
-    if (msg.room === room) { renderScroll = true; addMessages([msg], false); }
-    if (!rooms.includes(room)) { rooms.push(room); renderRooms(); }
+    await sendMessage({ type: "text", text });
   } catch (err) {
     input.value = text;
     updateSendBtn();
@@ -480,10 +769,161 @@ $("send").addEventListener("submit", async (e) => {
   input.focus();
 });
 
-/* ---------- start ---------- */
+async function upload(blob, mime) {
+  if (blob.size > MAX_UPLOAD) throw new Error("файл больше 4 МБ");
+  return api("media", { method: "POST", headers: { "content-type": mime }, body: blob });
+}
+
+/* photos & videos */
+$("attachBtn").addEventListener("click", () => $("fileInput").click());
+$("fileInput").addEventListener("change", async () => {
+  const file = $("fileInput").files[0];
+  $("fileInput").value = "";
+  if (!file || !conv) return;
+  setBusy(1);
+  try {
+    if (file.type.startsWith("image/")) {
+      const { blob, w, h, mime } = await prepareImage(file);
+      const up = await upload(blob, mime);
+      await sendMessage({ type: "image", media: { id: up.id, mime, w, h } });
+    } else if (file.type.startsWith("video/")) {
+      if (file.size > MAX_UPLOAD) {
+        throw new Error("видео больше 4 МБ. Бесплатный Netlify принимает только небольшие файлы — отправь ролик покороче (примерно до 10–20 секунд).");
+      }
+      const mime = file.type === "video/quicktime" ? "video/quicktime" : file.type;
+      const up = await upload(file, mime);
+      await sendMessage({ type: "video", media: { id: up.id, mime } });
+    } else {
+      throw new Error("можно отправлять только фото и видео");
+    }
+  } catch (err) {
+    alert("Не отправилось: " + err.message);
+  } finally {
+    setBusy(-1);
+  }
+});
+
+async function prepareImage(file) {
+  // GIFs keep their animation; everything else is resized to at most 1600px and re-encoded as JPEG.
+  if (file.type === "image/gif" && file.size <= MAX_UPLOAD) {
+    const bmp = await createImageBitmap(file);
+    return { blob: file, w: bmp.width, h: bmp.height, mime: "image/gif" };
+  }
+  let bmp;
+  try {
+    bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    throw new Error("не удалось открыть фото (формат HEIC? выбери «Наиболее совместимый» в настройках камеры)");
+  }
+  const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const w = Math.round(bmp.width * scale);
+  const h = Math.round(bmp.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  canvas.getContext("2d").drawImage(bmp, 0, 0, w, h);
+  let quality = 0.85;
+  let blob;
+  do {
+    blob = await new Promise((r) => canvas.toBlob(r, "image/jpeg", quality));
+    quality -= 0.15;
+  } while (blob.size > MAX_UPLOAD && quality > 0.3);
+  return { blob, w, h, mime: "image/jpeg" };
+}
+
+/* voice messages */
+let recorder = null;
+let recChunks = [];
+let recStart = 0;
+let recTimer = null;
+let recSend = false;
+
+function pickAudioMime() {
+  const options = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm", "audio/ogg;codecs=opus"];
+  return options.find((t) => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || "";
+}
+
+$("micBtn").addEventListener("click", async () => {
+  if (!conv || recorder) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) {
+    alert("Этот браузер не умеет записывать звук");
+    return;
+  }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch {
+    alert("Нет доступа к микрофону. Разреши его в настройках браузера.");
+    return;
+  }
+  const mime = pickAudioMime();
+  recorder = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 32000 } : undefined);
+  recChunks = [];
+  recSend = false;
+  recorder.ondataavailable = (e) => { if (e.data.size) recChunks.push(e.data); };
+  recorder.onstop = () => onRecordingStopped(stream);
+  recorder.start(250);
+  recStart = Date.now();
+  $("recTime").textContent = "0:00";
+  recTimer = setInterval(() => {
+    const sec = (Date.now() - recStart) / 1000;
+    $("recTime").textContent = fmtDur(sec);
+    if (sec >= MAX_VOICE_SEC) stopRecording(true);
+  }, 250);
+  setRecordingUi(true);
+});
+
+$("recCancel").addEventListener("click", () => cancelRecording());
+
+function setRecordingUi(on) {
+  $("textInput").hidden = on;
+  $("attachBtn").hidden = on;
+  $("micBtn").hidden = on;
+  $("recBar").hidden = !on;
+  updateSendBtn();
+}
+
+function stopRecording(send) {
+  if (!recorder) return;
+  recSend = send;
+  clearInterval(recTimer);
+  if (recorder.state !== "inactive") recorder.stop();
+}
+function cancelRecording() { stopRecording(false); }
+
+async function onRecordingStopped(stream) {
+  stream.getTracks().forEach((t) => t.stop());
+  const mime = (recorder.mimeType || "audio/webm").split(";")[0];
+  const dur = (Date.now() - recStart) / 1000;
+  const blob = new Blob(recChunks, { type: mime });
+  const send = recSend;
+  recorder = null;
+  setRecordingUi(false);
+  if (!send || dur < 0.7 || !blob.size) return;
+  setBusy(1);
+  try {
+    const up = await upload(blob, mime);
+    await sendMessage({ type: "audio", media: { id: up.id, mime, dur: Math.round(dur) } });
+  } catch (err) {
+    alert("Голосовое не отправилось: " + err.message);
+  } finally {
+    setBusy(-1);
+  }
+}
+
+/* image viewer */
+$("viewer").addEventListener("click", () => { $("viewer").hidden = true; });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("viewer").hidden = true; });
+
+/* ---------- boot ---------- */
+token = lsGet("chat.token");
 const savedName = lsGet("chat.name");
-if (savedName) login(savedName);
-else $("nameInput").focus();
+if (token && savedName) {
+  start(savedName);
+} else {
+  if (savedName) $("nameInput").value = savedName;
+  (savedName ? $("passInput") : $("nameInput")).focus();
+}
 </script>
 </body>
 </html>
